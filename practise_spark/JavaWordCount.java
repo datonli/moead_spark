@@ -42,7 +42,7 @@ public final class JavaWordCount {
       System.exit(1);
     }
 
-    SparkConf sparkConf = new SparkConf().setAppName("JavaWordCount");
+    SparkConf sparkConf = new SparkConf().setAppName("JavaWordCount");//.setMaster("master");
     JavaSparkContext ctx = new JavaSparkContext(sparkConf);
     JavaRDD<String> lines = ctx.textFile(args[0], 1);
 
@@ -59,8 +59,21 @@ public final class JavaWordCount {
         return new Tuple2<String, Integer>(s, 1);
       }
     });
+	
+	// union function should add in this place.  for testing how to create a same RDD data , use a RDD and empty RDD union , return a same RDD
+	//JavaPairRDD<String,Integer> empty = new JavaPairRDD<String,Integer>();
+	/*
+	JavaPairRDD<String,Integer> empty = ones.mapToPair(new PairFunction<String,String,Integer>(){
+		public Tuple2<String,Integer> call(String s){
+			return new Tuple2<String,Integer>();
+		}
+	});
+	*/
 
-    JavaPairRDD<String, Integer> counts = ones.reduceByKey(new Function2<Integer, Integer, Integer>() {
+	JavaPairRDD<String,Integer> aones = ones.union(ones);
+
+	// reduce by key , then merge String type 's value(Integer), i1 and i2, return a new Integer 
+    JavaPairRDD<String, Integer> counts = aones.reduceByKey(new Function2<Integer, Integer, Integer>() {
       @Override
       public Integer call(Integer i1, Integer i2) {
         return i1 + i2;
