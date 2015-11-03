@@ -3,6 +3,7 @@ package mr;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import moead.MOEAD;
@@ -21,6 +22,16 @@ import problems.DTLZ2;
 import problems.ZDT1;
 import utilities.StringJoin;
 import utilities.WrongRemindException;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFunction;
+import scala.Tuple2;
+
 
 public class MoeadMr {
 
@@ -52,73 +63,71 @@ public class MoeadMr {
 		
 		MopDataPop mopData = new MopDataPop(mop);
 		String mopStr = mopData.mop2Str();
-		HdfsOper hdfsOper = new HdfsOper();
-		hdfsOper.mkdir("moead/");
-		for(int i = 0; i < iterations + 1; i ++)
-			hdfsOper.rm("moead/" + i + "/");
-		hdfsOper.mkdir("moead/0/");
-		hdfsOper.createFile("moead/moead.txt", mopStr, writeTime);
-		hdfsOper.cp("moead/moead.txt","moead/0/part-r-00000");
+
+		SparkConf sparkConf = new SparkConf().setAppName("moead spark");
+		JavaSparkContext cxt = new JavaSparkContext(sparkConf);
+		JavaRDD<String> pop = cxt.parallelize(Arrays.asList(mopStr));
 
 		long startTime = System.currentTimeMillis();
 		System.out.println("Timer start!!!");
-		for (int i = 0; i < loopTime; i++) {
+		//for (int i = 0; i < loopTime; i++) {
+		for (int i = 0; i < 1; i++) {
 			System.out.println("The " + i + "th time!");
-			JobConf jobConf = new JobConf(MoeadMr.class);
-			jobConf.setJobName("moead mapreduce");
-			jobConf.setNumMapTasks(writeTime);
-			jobConf.setNumReduceTasks(1);
-
-			jobConf.setJarByClass(MoeadMr.class);
-			MapClass.setInnerLoop(innerLoop);
-			//MyFileInputFormat.setReadFileTime(jobConf,writeTime);
-			//jobConf.setInputFormat(MyFileInputFormat.class);
-			//NLineInputFormat.setNumLinesPerSplit(jobConf,1);
-			jobConf.setInputFormat(NLineInputFormat.class);
-			jobConf.setOutputFormat(TextOutputFormat.class);
-			jobConf.setMapperClass(MapClass.class);
-			jobConf.setReducerClass(ReduceClass.class);
-			jobConf.setOutputKeyClass(Text.class);
-			jobConf.setOutputValueClass(Text.class);
-
-
 			
-			FileInputFormat.addInputPath(jobConf,new Path(
-					"hdfs://192.168.1.102:8020/user/root/moead/moead.txt"));
-			/*
-			FileInputFormat.addInputPath(jobConf,new Path(
-					"hdfs://192.168.1.102:8020/user/root/moead/"
-					+ i + "/part-r-00000"));
-			*/
-			FileOutputFormat.setOutputPath(jobConf,new Path(
-					"hdfs://192.168.1.102:8020/user/root/moead/"
-					+ (i+1)));
-			System.out.println("Run job begin ... ");
-			JobClient.runJob(jobConf);
-			System.out.println("Run job end ... ");
-
-			// read the output of reduce and write the pop in moead.txt
-			mopData.clear();
-			mopData.setDelimiter("\n");
-			// read the whole file
-			mopData.line2mop(hdfsOper.readWholeFile("moead/"+(i+1)+"/part-r-00000"));		
-			mopStr = mopData.mop2Str();
-			hdfsOper.rm("moead/moead.txt");
-			hdfsOper.createFile("moead/moead.txt", mopStr, writeTime);
-		}
-		System.out.println("Running time is : " + (System.currentTimeMillis() - startTime));
-		for (int i = 0; i < loopTime + 1; i++) {
-			BufferedReader br = new BufferedReader(hdfsOper.open("moead/" + i + "/part-r-00000"));
-			String line = null;
-			String content = null;
-			List<String> col = new ArrayList<String>();
-			while ((line = br.readLine()) != null && line.split(" ").length > 2) {
-				col.add(StringJoin.join(" ",mopData.line2ObjValue(line)));
+			JavaRDD<String> p = pop.union(pop);
+			for(int j = 0; j < writeTime-2; j ++){
+					p = pop.union(p);
 			}
-			content = StringJoin.join("\n", col);
-			mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/" + i + ".txt",content);
-//			hdfsOper.createFile("/moead/" + i + "/objectiveValue.txt", content);
+			JavaPairRDD<String,String> mopPair = p.mapToPair(
+													new PairFunction<String,String,String>() {
+															public Tuple2<String,String> call(String s) throws WrongRemindException{
+																AProblem aProblem = ZDT1.getInstance();
+																AMOP aMop = CMOP.getInstance(popSize, neighbourSize, aProblem);
+																MopDataPop mmop = new MopDataPop(aMop);
+																mmop.line2mop(s);
+																MOEAD.moead(mmop.mop,innerLoop);
+																for (int k = 0; k < mmop.mop.chromosomes.size(); k ++) {
+																		return new Tuple2<String,String>(StringJoin.join(",",mmop.mop.weights.get(k)),mmop.mop2Line(k));
+																}
+																return new Tuple2<String,String>("111111111","111111111 " + StringJoin.join(",",mmop.mop.idealPoint));
+															}
+													}
+											);
+			
+			JavaPairRDD<String,String> mopPop = mopPair.reduceByKey(
+														new Function2<String,String,String>() {
+																public String call(String s1, String s2) {
+																		String[] s1split = s1.split(" ");
+																		String[] s2split = s2.split(" ");
+																		if("111111111".equals(s1split[0])) {
+																				String[] s1_idealPoint = s1split[1].split(",");
+																				String[] s2_idealPoint = s2split[1].split(",");
+																				for (int i = 0; i < s1_idealPoint.length; i ++) {
+																						if ( Double.parseDouble(s1_idealPoint[i]) > Double.parseDouble(s2_idealPoint[i]) )
+																										s1_idealPoint[i] = s2_idealPoint[i];
+																						return "111111111 " + StringJoin.join(",",s1_idealPoint);
+																				}
+																		} else {
+																				String[] s1_fv = s1split[1].split(",");
+																				String[] s2_fv = s2split[1].split(",");
+																				if(Double.parseDouble(s1_fv[4]) < Double.parseDouble(s2_fv[4]) )
+																								s1 = s2;
+																		}
+																		return s1;
+																}
+														}
+											);
+			//JavaRDD<String> mopValue = mopPop.values();
+			// Nov. 3  need to add a function let all recoreds merge to one population.
+			// and make it cycle
+
+
+			System.out.println("After map");
+			//pop = p;
+		mopPop.saveAsTextFile("/Spark/");
 		}
-		System.out.println("LoopTime is : " + loopTime + "\n");
+		System.out.println("Out of loop");
+		cxt.stop();
+		System.out.println("Running time is : " + (System.currentTimeMillis() - startTime));
 	}
 }

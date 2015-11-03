@@ -71,6 +71,9 @@ public final class JavaWordCount {
 	*/
 
 	JavaPairRDD<String,Integer> aones = ones.union(ones);
+	//JavaPairRDD<String,Integer> aones ;
+	for(int i = 0; i < 4-2; i ++)
+		aones = ones.union(aones);
 
 	// reduce by key , then merge String type 's value(Integer), i1 and i2, return a new Integer 
     JavaPairRDD<String, Integer> counts = aones.reduceByKey(new Function2<Integer, Integer, Integer>() {
