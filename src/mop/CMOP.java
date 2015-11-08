@@ -20,6 +20,7 @@ public class CMOP extends AMOP {
 		this.neighbourSize = neighbourSize;
 		this.objectiveDimesion = AProblem.objectiveDimesion;
 		this.problem = problem;
+		allocateAll();
 	}
 	
 	public static AMOP getInstance(int popSize,int neighbourSize,AProblem problem){

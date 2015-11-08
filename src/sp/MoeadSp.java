@@ -48,9 +48,9 @@ public class MoeadSp {
 
 		int popSize = 406;
 		int neighbourSize = 30;
-		int iterations = 400;
+		int iterations = 600;
 		int writeTime = 4;
-		int innerLoop = 20;
+		int innerLoop = 10;
 		int loopTime = iterations / (writeTime * innerLoop);
 		AProblem problem = ZDT1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
@@ -77,7 +77,6 @@ public class MoeadSp {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
-		//for (int i = 0; i < 1; i++) {
 			System.out.println("The " + i + "th time!");
 			List<String> pStr = new ArrayList<String>();
 			for(int j = 0; j < writeTime; j ++)
@@ -119,28 +118,8 @@ public class MoeadSp {
 													}
 											);
 
-/*
-			JavaPairRDD<String,String> mopPair = p.mapToPair(
-													new PairFunction<String,String,String>() {
-															public Tuple2<String,String> call(String s) throws WrongRemindException{
-																System.out.println("mop is : " + s ); 
-																int popSize = 406;
-																int neighbourSize = 30;
-																AProblem aProblem = ZDT1.getInstance();
-																AMOP aMop = CMOP.getInstance(popSize, neighbourSize, aProblem);
-																MopDataPop mmop = new MopDataPop(aMop);
-																mmop.line2mop(s);
-																MOEAD.moead(mmop.mop,innerLoop);
-																for (int k = 0; k < mmop.mop.chromosomes.size(); k ++) {
-																		return new Tuple2<String,String>(StringJoin.join(",",mmop.mop.weights.get(k)),mmop.mop2Line(k));
-																}
-																return new Tuple2<String,String>("111111111","111111111 " + StringJoin.join(",",mmop.mop.idealPoint));
-															}
-													}
-											);
-*/					
-
 			List<Tuple2<String, String>> output = mopPair.collect();
+			if(i == loopTime-1 )
 			for(Tuple2<?,?> t : output)
 					System.out.println(t._1() + "##############" + t._2());
 
@@ -155,15 +134,17 @@ public class MoeadSp {
 																				for (int i = 0; i < s1_idealPoint.length; i ++) {
 																						if ( Double.parseDouble(s1_idealPoint[i]) > Double.parseDouble(s2_idealPoint[i]) )
 																										s1_idealPoint[i] = s2_idealPoint[i];
-																						return "111111111 " + StringJoin.join(",",s1_idealPoint);
 																				}
+																				return "111111111 " + StringJoin.join(",",s1_idealPoint);
 																		} else {
 																				String[] s1_fv = s1split[1].split(",");
 																				String[] s2_fv = s2split[1].split(",");
-																				if(Double.parseDouble(s1_fv[4]) < Double.parseDouble(s2_fv[4]) )
+																				// Nov 8
+																				// s1_fv[4] is fitnessvalue, their order is : weights, chromosomes genes, chromosomes objective value, neighbour table, fitness value
+																				if(Double.parseDouble(s1_fv[4]) > Double.parseDouble(s2_fv[4]) )
 																								s1 = s2;
+																				return s1;
 																		}
-																		return s1;
 																}
 														}
 											);
@@ -171,6 +152,7 @@ public class MoeadSp {
 			output = mopPop.collect();
 			List<String> mopList = new ArrayList<String>();
 			for(Tuple2<?,?> t : output) {
+				if(i == loopTime -1 )
 					System.out.println(t._1() + "#############" + t._2());
 					mopList.add(t._2().toString());
 			}
@@ -190,5 +172,15 @@ public class MoeadSp {
 		System.out.println("Out of loop");
 		cxt.stop();
 		System.out.println("Running time is : " + (System.currentTimeMillis() - startTime));
+      BufferedReader br = new BufferedReader(hdfsOper.open("spark/spark_moead.txt"));
+      String line = null;
+      String content = null;
+      List<String> col = new ArrayList<String>();
+      while ((line = br.readLine()) != null && line.split(" ").length > 2) {
+        col.add(StringJoin.join(" ",mopData.line2ObjValue(line)));          
+      }
+      content = StringJoin.join("\n", col);
+      mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/spark_moead.txt",content);
 	}
+
 }
