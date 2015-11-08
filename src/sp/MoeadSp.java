@@ -48,9 +48,9 @@ public class MoeadSp {
 
 		int popSize = 406;
 		int neighbourSize = 30;
-		int iterations = 600;
+		int iterations = 1600;
 		int writeTime = 4;
-		int innerLoop = 10;
+		int innerLoop = 2;
 		int loopTime = iterations / (writeTime * innerLoop);
 		AProblem problem = ZDT1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
@@ -75,28 +75,15 @@ public class MoeadSp {
 				//JavaRDD<String> pop = cxt.parallelize(Arrays.asList(mopStr));
 
 		long startTime = System.currentTimeMillis();
+		List<String> pStr = new ArrayList<String>();
+		List<String> mopList = new ArrayList<String>();
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
-			List<String> pStr = new ArrayList<String>();
+			pStr.clear();
 			for(int j = 0; j < writeTime; j ++)
 					pStr.add(mopStr);
 			JavaRDD<String> p = cxt.parallelize(pStr,writeTime);
-			/*
-			JavaRDD<String> p = pop.union(pop);
-			List<String> pl = p.collect();
-			for(String ps : pl) {
-			//				System.out.println(ps);
-			}
-			System.out.println("before union");
-			for(int j = 0; j < writeTime-2; j ++){
-					p = pop.union(p);
-			}
-			pl = p.collect();
-			for(String ps : pl) {
-			//				System.out.println(ps);
-			}
-			*/
 			System.out.println("after union");
 			JavaPairRDD<String,String> mopPair = p.mapPartitionsToPair(
 													new PairFlatMapFunction<Iterator<String>,String,String>() {
@@ -113,11 +100,11 @@ public class MoeadSp {
 																		lt.add(new Tuple2<String,String>(StringJoin.join(",",mmop.mop.weights.get(k)),mmop.mop2Line(k)));
 																}
 																lt.add(new Tuple2<String,String>("111111111","111111111 " + StringJoin.join(",",mmop.mop.idealPoint)));
+																mmop.clear();
 																return lt;
 															}
 													}
 											);
-
 			List<Tuple2<String, String>> output = mopPair.collect();
 			if(i == loopTime-1 )
 			for(Tuple2<?,?> t : output)
@@ -137,11 +124,11 @@ public class MoeadSp {
 																				}
 																				return "111111111 " + StringJoin.join(",",s1_idealPoint);
 																		} else {
-																				String[] s1_fv = s1split[1].split(",");
-																				String[] s2_fv = s2split[1].split(",");
+																				String s1_fv = s1split[4];
+																				String s2_fv = s2split[4];
 																				// Nov 8
 																				// s1_fv[4] is fitnessvalue, their order is : weights, chromosomes genes, chromosomes objective value, neighbour table, fitness value
-																				if(Double.parseDouble(s1_fv[4]) > Double.parseDouble(s2_fv[4]) )
+																				if(Double.parseDouble(s1_fv) > Double.parseDouble(s2_fv) )
 																								s1 = s2;
 																				return s1;
 																		}
@@ -150,7 +137,7 @@ public class MoeadSp {
 											);
 			System.out.println("after reduceByKey!");
 			output = mopPop.collect();
-			List<String> mopList = new ArrayList<String>();
+			mopList.clear();
 			for(Tuple2<?,?> t : output) {
 				if(i == loopTime -1 )
 					System.out.println(t._1() + "#############" + t._2());
@@ -169,18 +156,19 @@ public class MoeadSp {
 					hdfsOper.createFile("spark/spark_moead.txt", StringJoin.join("\n",mopList));
 			}
 		}
+
 		System.out.println("Out of loop");
 		cxt.stop();
 		System.out.println("Running time is : " + (System.currentTimeMillis() - startTime));
-      BufferedReader br = new BufferedReader(hdfsOper.open("spark/spark_moead.txt"));
-      String line = null;
-      String content = null;
-      List<String> col = new ArrayList<String>();
-      while ((line = br.readLine()) != null && line.split(" ").length > 2) {
-        col.add(StringJoin.join(" ",mopData.line2ObjValue(line)));          
-      }
-      content = StringJoin.join("\n", col);
-      mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/spark_moead.txt",content);
+    BufferedReader br = new BufferedReader(hdfsOper.open("spark/spark_moead.txt"));
+    String line = null;
+    String content = null;
+    List<String> col = new ArrayList<String>();
+    while ((line = br.readLine()) != null && line.split(" ").length > 2) {
+       col.add(StringJoin.join(" ",mopData.line2ObjValue(line)));          
+    }
+    content = StringJoin.join("\n", col);
+    mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/spark_moead.txt",content);
 	}
 
 }

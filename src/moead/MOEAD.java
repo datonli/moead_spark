@@ -16,7 +16,7 @@ import problems.ZDT6;
 public class MOEAD {
 	
 	public static void moead(AMOP mop,int iterations){
-		mop.initial();
+		//mop.initial();
 		for(int i = 0 ; i < iterations; i ++)
 			mop.updatePop();
 	}

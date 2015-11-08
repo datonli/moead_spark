@@ -30,6 +30,7 @@ import org.apache.spark.api.java.function.PairFunction;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public final class JavaWordCount {
@@ -49,7 +50,12 @@ public final class JavaWordCount {
     JavaRDD<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
       @Override
       public Iterable<String> call(String s) {
-        return Arrays.asList(SPACE.split(s));
+				List<String> ls = new ArrayList<String>();
+				ls.add("hello");
+				ls.add("helloa");
+				ls.add("hello");
+				return ls;
+        //return Arrays.asList(SPACE.split(s));
       }
     });
 
