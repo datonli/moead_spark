@@ -48,7 +48,7 @@ public class MoeadSp {
 
 		int popSize = 406;
 		int neighbourSize = 30;
-		int iterations = 1600;
+		int iterations = 800;
 		int writeTime = 4;
 		int innerLoop = 2;
 		int loopTime = iterations / (writeTime * innerLoop);
