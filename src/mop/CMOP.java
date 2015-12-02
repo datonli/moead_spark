@@ -34,6 +34,55 @@ public class CMOP extends AMOP {
 		return new CMOP(popSize,neighbourSize,problem);
 	}
 	
+    public List<int[]> indexRangePartition(double p,int partitionNum) {
+        List<int[]> partitions = new ArrayList<int[]>(partitionNum);
+        List<Integer> partList = new ArrayList<Integer>(popSize/partitionNum);
+        for(int i = 0; i < partitionNum; i ++) {
+            int cnt = i ;
+            partList.clear();
+            while(cnt < popSize) {
+                partList.add(new Integer(cnt));
+                cnt += partitionNum;
+            }
+            int[] arr = new int[partList.size()];
+            for(int j = 0 ; j < partList.size(); j ++) arr[j] = partList.get(j).intValue();
+            partitions.add(arr);
+        }
+        return partitions;
+    }
+
+    /*
+    public List<int[]> indexRangePartition(double p,int partitionNum) {
+        int increase =(int)(p*popSize);
+        if( 1 == partitionNum ) increase = 0;
+        int part = (int)(popSize/partitionNum);
+        List<int[]> partitions = new ArrayList<int[]>(partitionNum);
+        int index = 0 ;
+        for(int i = 0; i < partitionNum; i ++) {
+            if(0 == i) ;
+            else if(partitionNum - 1 == i) index = popSize - (part + increase);                                                                                                                                    
+            else index -= increase/2;
+            int[] arr = new int[part + increase];                                                                                                                                                                  
+            for(int j = 0; j < part + increase; j ++) {
+                    arr[j] = index;
+                    index ++;
+            }
+            partitions.add(arr);
+        }
+        return partitions;
+    }
+    */
+
+    public void initPartition(int partitionNum) {
+        partitions.clear();
+        partitions = indexRangePartition(0.05,partitionNum);
+    }
+
+    public void setPartitionArr(int i) {
+        partitionArr = partitions.get(i);
+        //System.out.println("partition's " + i + " is : " + StringJoin.join(" ",partitionArr));
+    }
+
 	
 	@Override
 	public void initial() {
@@ -45,6 +94,9 @@ public class CMOP extends AMOP {
 		initNeighbour();
 		generateInitialPop();
 		evaluateAfterInitial();
+
+		partitions = indexRangePartition(0.05,1);
+		partitionArr = partitions.get(0);        
 	}
 
 

@@ -20,6 +20,7 @@ import org.apache.hadoop.mapred.lib.NLineInputFormat;
 
 import problems.AProblem;
 import problems.DTLZ2;
+import problems.DTLZ1;
 import problems.ZDT1;
 import utilities.StringJoin;
 import utilities.WrongRemindException;
@@ -48,11 +49,11 @@ public class MoeadSp {
 
 		int popSize = 406;
 		int neighbourSize = 30;
-		int iterations = 800;
+		int iterations = 400;
 		int writeTime = 4;
-		int innerLoop = 2;
+		int innerLoop = 1;
 		int loopTime = iterations / (writeTime * innerLoop);
-		AProblem problem = ZDT1.getInstance();
+		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
 
 		mop.initial();
@@ -80,6 +81,7 @@ public class MoeadSp {
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
+			Thread.sleep(2500);
 			pStr.clear();
 			for(int j = 0; j < writeTime; j ++)
 					pStr.add(mopStr);
@@ -90,7 +92,7 @@ public class MoeadSp {
 															public Iterable<Tuple2<String,String>> call(Iterator<String> s) throws WrongRemindException{
 																int popSize = 406;
 																int neighbourSize = 30;
-																AProblem aProblem = ZDT1.getInstance();
+																AProblem aProblem = DTLZ1.getInstance();
 																AMOP aMop = CMOP.getInstance(popSize, neighbourSize, aProblem);
 																MopDataPop mmop = new MopDataPop(aMop);
 																mmop.line2mop(s.next());

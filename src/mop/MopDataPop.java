@@ -190,7 +190,7 @@ public class MopDataPop implements DataOperator {
 			int[] neighbour = new int[mop.neighbourSize];
 			if (neighbourStr.length != neighbour.length) {
 				throw new WrongRemindException(
-						"neighbour length isn't match. Data transfer error!");
+						"neighbour length isn't match. Data transfer error!\nright neighbour length is " + neighbour.length + " , and pass length of neighbour is " + neighbourStr.length + " !!!");
 			}
 			for (int i = 0; i < neighbourStr.length; i++) {
 				neighbour[i] = Integer.parseInt(neighbourStr[i]);

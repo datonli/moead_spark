@@ -21,8 +21,8 @@ import org.apache.hadoop.mapred.JobConf;
 public class HdfsOper {
 
 	// HDFS address
-	//private static final String HDFS = "hdfs://192.168.1.102:9000/";
-	private static final String HDFS = "hdfs://192.168.1.102:8020/";
+	//private static final String HDFS = "hdfs://master:9000/";
+	private static final String HDFS = "hdfs://master:8020/";
 	// hdfs path
 	private String hdfsPath;
 	// Hadoop configure

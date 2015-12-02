@@ -18,6 +18,9 @@ public abstract class AMOP{
 	public List<double[]> weights;
 	public List<int[]> neighbourTable;
 	public List<MoChromosome> chromosomes;
+
+	public int[] partitionArr;
+	public List<int[]> partitions;
 	
 	public void clearAll(){
 		idealPoint = null;
