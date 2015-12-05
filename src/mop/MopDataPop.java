@@ -36,7 +36,10 @@ public class MopDataPop implements DataOperator {
 		for (int i = 0; i < mop.chromosomes.size(); i++) {
 			col.add(mop2Line(i));
 		}
-		col.add("111111111 " + StringJoin.join(",", mop.idealPoint));
+		List<String> cc = new ArrayList<String>(2);
+		cc.add(StringJoin.join(",", mop.idealPoint));
+		cc.add(StringJoin.join(",", mop.partitionArr));
+		col.add("111111111 " + StringJoin.join("#",cc));
 		return StringJoin.join("_", col);
 	}
 
@@ -48,6 +51,8 @@ public class MopDataPop implements DataOperator {
 		col.add(StringJoin.join(",", mop.chromosomes.get(i).objectiveValue));
 		col.add(StringJoin.join(",", mop.neighbourTable.get(i)));
 		col.add(String.valueOf(mop.chromosomes.get(i).fitnessValue));
+		// add idealPoint for every ind . Dec 4
+		col.add(StringJoin.join(",", mop.chromosomes.get(i).idealPoint));
 		return StringJoin.join(" ", col);
 	}
 
@@ -70,78 +75,51 @@ public class MopDataPop implements DataOperator {
 		return objectiveValue;
 	}
 
-	// oh,Oct 30  this function deal with reduce output file transfer to map input file format,I need this function input the whole file and generate mop, then I could use write file function .
-	/*
-  public void reduceFile2mop(String line) throws WrongRemindException {
-    String[] lineSplit = line.split(" ");
-    if ("111111111".equals(lineSplit[0])) {
-      String[] idealPoint = lineSplit[1].split(",");
-      if (idealPoint.length != mop.idealPoint.length) {
-        throw new WrongRemindException(
-            "idealPoint length isn't match. Data transfer error!");
-      }
-      for (int i = 0; i < idealPoint.length; i++) {
-        mop.idealPoint[i] = Double.parseDouble(idealPoint[i]);
-      }
-    } else {
-      String[] weightStr = lineSplit[0].split(",");
-      double[] weight = new double[mop.objectiveDimesion];
-      if (weightStr.length != weight.length) {
-        throw new WrongRemindException(
-            "weight length isn't match. Data transfer error!\n"
-                + "weightStr.lenght is : " + weightStr.length
-                + "\nweight.length is :" + weight.length);
-      }
-      for (int i = 0; i < weightStr.length; i++) {
-        weight[i] = Double.parseDouble(weightStr[i]);
-      }
-      mop.weights.add(weight);
-
-      String[] chromosomeStr = lineSplit[1].split(",");
-      String[] objectiveValueStr = lineSplit[2].split(",");
-      String fitnessValueStr = lineSplit[4];
-      MoChromosome chromosome = CMoChromosome.createChromosome();
-      if (chromosomeStr.length != chromosome.genes.length) {
-        throw new WrongRemindException(
-            "chromosome length isn't match. Data transfer error!");
-      }
-      if (objectiveValueStr.length != chromosome.objectiveValue.length) {
-        throw new WrongRemindException(
-            "objectiveValue length isn't match. Data transfer error!");
-      }
-      for (int i = 0; i < chromosomeStr.length; i++) {
-        chromosome.genes[i] = Double.parseDouble(chromosomeStr[i]);
-      }
-      for (int i = 0; i < objectiveValueStr.length; i++) {
-        chromosome.objectiveValue[i] = Double
-            .parseDouble(objectiveValueStr[i]);
-      }
-      chromosome.fitnessValue = Double.parseDouble(fitnessValueStr);
-      mop.chromosomes.add(chromosome);
-
-      String[] neighbourStr = lineSplit[3].split(",");
-      int[] neighbour = new int[mop.neighbourSize];
-      if (neighbourStr.length != neighbour.length) {
-        throw new WrongRemindException(   
-            "neighbour length isn't match. Data transfer error!");
-      }
-      for (int i = 0; i < neighbourStr.length; i++) {
-        neighbour[i] = Integer.parseInt(neighbourStr[i]);
-      }
-      mop.neighbourTable.add(neighbour);
-    }
-  }   
-	*/
-
+	private List<String> genWeight(int popSize) {
+        List<String> weights = new ArrayList<String>(popSize);
+        for (int i = 0; i <= popSize; i++) {
+            if (mop.objectiveDimesion == 2) {
+                double[] weight = new double[2];
+                weight[0] = i / (double) popSize;
+                weight[1] = (popSize - i) / (double) popSize;
+                weights.add(StringJoin.join(",",weight));
+            } else if (mop.objectiveDimesion == 3) {
+                int parts_num = 0;
+                for(int f = 0; f <= popSize/2; f ++){
+                    if(popSize == f*(f-1)/2){
+                            parts_num = f;
+                            break;
+                    }
+                }
+                for (int j = 0; j <= parts_num; j++) {
+                    if (i + j <= parts_num) {
+                        int k = parts_num - i - j;
+                        double[] weight = new double[3];
+                        weight[0] = i / (double) parts_num;
+                        weight[1] = j / (double) parts_num;
+                        weight[2] = k / (double) parts_num;
+                		weights.add(StringJoin.join(",",weight));
+                    }
+                }
+            }
+        }
+		return weights;
+	}
 
 	@Override
 	public void line2mop(String line) throws WrongRemindException {
 		// Oct. 30, A line stands for the pops. So split "_" will lead to mutli lines , and each l in lines stand for a individual
 		String[] lines = line.split(DELIMITER);
+		List<String> weightList = genWeight(mop.popSize);
+		AMOP mopTmp = new CMOP(mop.popSize,mop.objectiveDimesion);
+		int[] index = new int[mop.popSize];
+		int cnt = 0;
 		for(int l = 0 ; l < lines.length ; l ++){
 			String[] lineSplit = lines[l].split(" ");
 			if ("111111111".equals(lineSplit[0])) {
-				String[] idealPoint = lineSplit[1].split(",");
+				String[] ss = lineSplit[1].split("#");
+				String[] idealPoint = ss[0].split(",");
+				String[] partitionArr = ss[1].split(",");
 				if (idealPoint.length != mop.idealPoint.length) {
 					throw new WrongRemindException(
 						"idealPoint length isn't match. Data transfer error!");
@@ -149,20 +127,26 @@ public class MopDataPop implements DataOperator {
 				for (int i = 0; i < idealPoint.length; i++) {
 						mop.idealPoint[i] = Double.parseDouble(idealPoint[i]);
 				}
-		  } else {	
+				mop.partitionArr = new int[partitionArr.length];
+				for (int i = 0; i < partitionArr.length; i++) {
+						mop.partitionArr[i] = Integer.parseInt(partitionArr[i]);
+				}
 
+		  } else {	
+			index[cnt] = weightList.indexOf(lineSplit[0]);
+			cnt ++;
 			String[] weightStr = lineSplit[0].split(",");
 			double[] weight = new double[mop.objectiveDimesion];
 			if (weightStr.length != weight.length) {
 				throw new WrongRemindException(
 						"weight length isn't match. Data transfer error!\n"
-								+ "weightStr.lenght is : " + weightStr.length
+								+ "weightStr.length is : " + weightStr.length
 								+ "\nweight.length is :" + weight.length);
 			}
 			for (int i = 0; i < weightStr.length; i++) {
 				weight[i] = Double.parseDouble(weightStr[i]);
 			}
-			mop.weights.add(weight);
+			mopTmp.weights.add(weight);
 
 			String[] chromosomeStr = lineSplit[1].split(",");
 			String[] objectiveValueStr = lineSplit[2].split(",");
@@ -184,7 +168,12 @@ public class MopDataPop implements DataOperator {
 						.parseDouble(objectiveValueStr[i]);
 			}
 			chromosome.fitnessValue = Double.parseDouble(fitnessValueStr);
-			mop.chromosomes.add(chromosome);
+			
+			String[] idealPointStr = lineSplit[5].split(",");
+			for(int j = 0; j < mop.objectiveDimesion; j ++) {
+				chromosome.idealPoint[j] = Double.parseDouble(idealPointStr[j]);
+			}
+			mopTmp.chromosomes.add(chromosome);
 
 			String[] neighbourStr = lineSplit[3].split(",");
 			int[] neighbour = new int[mop.neighbourSize];
@@ -195,8 +184,24 @@ public class MopDataPop implements DataOperator {
 			for (int i = 0; i < neighbourStr.length; i++) {
 				neighbour[i] = Integer.parseInt(neighbourStr[i]);
 			}
-			mop.neighbourTable.add(neighbour);
+			mopTmp.neighbourTable.add(neighbour);
 		}
+		}
+		int j = 0;
+		mop.weights.clear();
+		mop.chromosomes.clear();
+		mop.neighbourTable.clear();
+		for(int i = 0 ; i < mop.popSize; i ++) {
+			for(j = 0 ; j < mop.popSize; j ++) {
+				if(i == index[j])
+					break;
+			}
+			mop.weights.add(mopTmp.weights.get(j));
+			mop.chromosomes.add(mopTmp.chromosomes.get(j));
+			mop.neighbourTable.add(mopTmp.neighbourTable.get(j));
+		}
+		for(int i = 0 ;i < mop.popSize ; i ++) {
+			//System.out.println("original weights 's " + i + " is : " + weightList.get(i) + "\nmop's weights 's " + i + " is : " + StringJoin.join(" ",mop.weights.get(i)));
 		}
 	}
 	

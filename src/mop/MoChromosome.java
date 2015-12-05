@@ -9,12 +9,14 @@ public abstract class MoChromosome {
 	public static final double EPS = 1.2e-7;
 
 	private static final long serialVersionUID = 1L;
-	protected static int objectiveDimesion;
-	protected static int genesDimesion;
-	protected double[] genes;
-	protected double[] objectiveValue;
-	protected double fitnessValue;
+	public static int objectiveDimesion;
+	public static int genesDimesion;
+	public double[] genes;
+	public double[] objectiveValue;
+	public double fitnessValue;
 	protected static int[][] range;
+
+	public double[] idealPoint;
 
 	protected Object clone() throws CloneNotSupportedException {
 		throw new CloneNotSupportedException(
@@ -27,7 +29,9 @@ public abstract class MoChromosome {
 				objectiveValue.length);
 		System.arraycopy(genes, 0, copyto.genes, 0,
 				genes.length);
-	}
+		System.arraycopy(idealPoint, 0, copyto.idealPoint, 0,
+				idealPoint.length);
+}
 
 	public abstract double parameterDistance(MoChromosome another);
 

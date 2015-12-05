@@ -51,7 +51,7 @@ public class MoeadSp {
 		int neighbourSize = 30;
 		int iterations = 400;
 		int writeTime = 4;
-		int innerLoop = 1;
+		int innerLoop = 10;
 		int loopTime = iterations / (writeTime * innerLoop);
 		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
@@ -81,7 +81,7 @@ public class MoeadSp {
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
-			Thread.sleep(2500);
+			//Thread.sleep(2500);
 			pStr.clear();
 			for(int j = 0; j < writeTime; j ++)
 					pStr.add(mopStr);
@@ -101,9 +101,12 @@ public class MoeadSp {
 																for (int k = 0; k < mmop.mop.chromosomes.size(); k ++) {
 																		lt.add(new Tuple2<String,String>(StringJoin.join(",",mmop.mop.weights.get(k)),mmop.mop2Line(k)));
 																}
-																lt.add(new Tuple2<String,String>("111111111","111111111 " + StringJoin.join(",",mmop.mop.idealPoint)));
-																mmop.clear();
-																return lt;
+                                                                List<String> cc = new ArrayList<String>(2);
+                                                                cc.add(StringJoin.join(",", mmop.mop.idealPoint));
+                                                                cc.add(StringJoin.join(",", mmop.mop.partitionArr));
+                                                                lt.add(new Tuple2<String,String>("111111111","111111111 " + StringJoin.join("#",cc)));
+                                                                mmop.clear();
+                                                                return lt;
 															}
 													}
 											);
@@ -118,13 +121,20 @@ public class MoeadSp {
 																		String[] s1split = s1.split(" ");
 																		String[] s2split = s2.split(" ");
 																		if("111111111".equals(s1split[0])) {
-																				String[] s1_idealPoint = s1split[1].split(",");
-																				String[] s2_idealPoint = s2split[1].split(",");
-																				for (int i = 0; i < s1_idealPoint.length; i ++) {
-																						if ( Double.parseDouble(s1_idealPoint[i]) > Double.parseDouble(s2_idealPoint[i]) )
-																										s1_idealPoint[i] = s2_idealPoint[i];
-																				}
-																				return "111111111 " + StringJoin.join(",",s1_idealPoint);
+                                                                            System.out.println("enterrrrrrr 11111111111111");
+                                                                            System.out.println("s1: \n" + s1 + "\ns2 :\n" + s2);
+                                                                            String[] ss1 = s1split[1].split("#");
+                                                                            String[] ss2 = s2split[1].split("#");
+                                                                            String[] s1_idealPoint = ss1[0].split(",");
+                                                                            String[] s2_idealPoint = ss2[0].split(",");
+                                                                            for (int i = 0; i < s1_idealPoint.length; i ++) {
+                                                                                    if ( Double.parseDouble(s1_idealPoint[i]) > Double.parseDouble(s2_idealPoint[i]) )
+                                                                                            s1_idealPoint[i] = s2_idealPoint[i];
+                                                                            }
+                                                                            System.out.println("ss1: \n" + s1split[0] + "\nss2 :\n" + s2split[0]);
+																			for(int i = 0; i < ss1.length ; i ++)
+																			System.out.println("ss1's "+ i + " = \n" + ss1[i]);
+                                                                            return "111111111 " + StringJoin.join(",",s1_idealPoint) + "#" + ss1[1];
 																		} else {
 																				String s1_fv = s1split[4];
 																				String s2_fv = s2split[4];

@@ -21,6 +21,7 @@ public class CMoChromosome extends MoChromosome {
 		range = AProblem.range;
 		objectiveValue = new double[objectiveDimesion];
 		genes = new double[genesDimesion];
+		idealPoint = new double[objectiveDimesion];
 	}
 	
 	public static CMoChromosome getEmptyChromosome() {

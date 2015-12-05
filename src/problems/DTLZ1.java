@@ -8,6 +8,7 @@ public class DTLZ1 extends AProblem{
 	private DTLZ1(){
 		genesDimesion = 10;
 		objectiveDimesion = 3;
+		//objectiveDimesion = 2;
 		limit = 2;
 		range = new int[genesDimesion][limit];
 		for(int i = 0; i < genesDimesion; i ++){

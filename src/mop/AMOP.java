@@ -22,6 +22,7 @@ public abstract class AMOP{
 	public int[] partitionArr;
 	public List<int[]> partitions;
 	
+
 	public void clearAll(){
 		idealPoint = null;
 		weights = null;
@@ -37,6 +38,9 @@ public abstract class AMOP{
 		chromosomes = new ArrayList<MoChromosome>(popSize);
 	}
 	
+	public abstract List<int[]> indexRangePartition(double p,int partitionNum);
+	public abstract void initPartition(int partitionNum);
+	public abstract void setPartitionArr(int i);
 	public abstract void initial();
 	abstract void generateInitialPop();
 	public abstract void updatePop();

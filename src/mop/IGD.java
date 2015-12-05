@@ -49,7 +49,10 @@ public class IGD {
 		}
 		return Math.sqrt(sum);
 	}
-	
+
+	public double calcIGD() {}
+
+/*	
     public double calcIGD(List<SOP> sops) {
         double distanceIGD = 0.0;
         for (int i  = 0 ; i < ps.size(); i ++) {
@@ -63,6 +66,7 @@ public class IGD {
         distanceIGD /= sops.size();
         return distanceIGD;
     }
+*/
 
 
 	public List<double[]> loadPfront(String filename) throws IOException {
