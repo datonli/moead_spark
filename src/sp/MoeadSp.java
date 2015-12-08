@@ -10,8 +10,8 @@ import java.util.Iterator;
 import moead.MOEAD;
 import mop.AMOP;
 import mop.CMOP;
-import mop.MopData;
 import mop.MopDataPop;
+import mop.IGD;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
@@ -49,7 +49,7 @@ public class MoeadSp {
 
 		int popSize = 406;
 		int neighbourSize = 30;
-		int iterations = 400;
+		int iterations = 800;
 		int writeTime = 4;
 		int innerLoop = 10;
 		int loopTime = iterations / (writeTime * innerLoop);
@@ -78,11 +78,31 @@ public class MoeadSp {
 		long startTime = System.currentTimeMillis();
 		List<String> pStr = new ArrayList<String>();
 		List<String> mopList = new ArrayList<String>();
+
+        IGD igdOper = new IGD(1500);
+        String filename = "/home/laboratory/workspace/TestData/PF_Real/DTLZ1(3).dat";
+        try {
+            igdOper.ps = igdOper.loadPfront(filename);
+        } catch (IOException e) {}
+	
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
 			//Thread.sleep(2500);
 			pStr.clear();
+	
+			mopData.clear();
+			mopData.line2mop(mopStr);
+
+            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size()); 
+           	for(int j = 0; j < mop.chromosomes.size(); j ++) {
+               real.add(mop.chromosomes.get(j).objectiveValue);
+            }
+            double[] genDisIGD = new double[2];
+            genDisIGD[0] = i*innerLoop;
+            genDisIGD[1] = igdOper.calcIGD(real);
+            igdOper.igd.add(genDisIGD);
+
 			for(int j = 0; j < writeTime; j ++)
 					pStr.add(mopStr);
 			JavaRDD<String> p = cxt.parallelize(pStr,writeTime);
@@ -110,10 +130,12 @@ public class MoeadSp {
 															}
 													}
 											);
+			/*
 			List<Tuple2<String, String>> output = mopPair.collect();
 			if(i == loopTime-1 )
 			for(Tuple2<?,?> t : output)
 					System.out.println(t._1() + "##############" + t._2());
+			*/
 
 			JavaPairRDD<String,String> mopPop = mopPair.reduceByKey(
 														new Function2<String,String,String>() {
@@ -148,7 +170,7 @@ public class MoeadSp {
 														}
 											);
 			System.out.println("after reduceByKey!");
-			output = mopPop.collect();
+			List<Tuple2<String, String>> output = mopPop.collect();
 			mopList.clear();
 			for(Tuple2<?,?> t : output) {
 				if(i == loopTime -1 )
@@ -162,6 +184,9 @@ public class MoeadSp {
 			// and make it cycle
 
 			System.out.println("After map");
+
+
+
 			//pop = p;
 			if(i == loopTime -1){
 					hdfsOper.mkdir("spark/");
@@ -181,6 +206,14 @@ public class MoeadSp {
     }
     content = StringJoin.join("\n", col);
     mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/spark_moead.txt",content);
+
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/MOEAD_SP_IGD_DTLZ1_3.txt";
+        try {
+            igdOper.saveIGD(filename);
+        } catch (IOException e) {}
+
+
 	}
 
+    
 }

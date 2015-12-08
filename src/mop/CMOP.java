@@ -9,6 +9,7 @@ import java.util.List;
 
 import problems.AProblem;
 import utilities.WrongRemindException;
+import utilities.StringJoin;
 
 public class CMOP extends AMOP {
 
@@ -206,18 +207,15 @@ public class CMOP extends AMOP {
 	private MoChromosome diffReproduction(int i){
 		int k, l, m;
 		do{
-			k = neighbourTable.get(i)[PRNG.nextInt(0,
-					neighbourSize - 1)];
+			k = neighbourTable.get(i)[(int)(PRNG.nextDouble()*neighbourTable.get(i).length)];
 		}
 		while (k == i);
 		do{
-			l = neighbourTable.get(i)[PRNG.nextInt(0,
-					neighbourSize - 1)];
+			l = neighbourTable.get(i)[(int)(PRNG.nextDouble()*neighbourTable.get(i).length)];
 		}
 		while (l == k || l == i);
 		do{
-			m = neighbourTable.get(i)[PRNG.nextInt(0,
-					neighbourSize - 1)];
+			m = neighbourTable.get(i)[(int)(PRNG.nextDouble()*neighbourTable.get(i).length)];
 		}
 		while (m == l || m == k || m == i);
 
@@ -230,9 +228,10 @@ public class CMOP extends AMOP {
 
 		// generic operation crossover and mutation.
 		MoChromosome offSpring = (MoChromosome)CMoChromosome.getEmptyChromosome();
-		offSpring.diff_xover(chromosome1,chromosome2,chromosome3);
+		//offSpring.diff_xover(chromosome1,chromosome2,chromosome3);
+		offSpring.crossover((MoChromosome)chromosome1,(MoChromosome)chromosome2);
 		offSpring.mutate(1d / offSpring.genesDimesion);
-//		offSpring.mutate(1);
+		//offSpring.mutate(1d / partitionArr.length);
 		return offSpring;
 	}
 	

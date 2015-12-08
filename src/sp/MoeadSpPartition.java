@@ -14,8 +14,8 @@ import mop.AMOP;
 import mop.CMOP;
 import mop.MoChromosome;
 import mop.CMoChromosome;
-import mop.MopData;
 import mop.MopDataPop;
+import mop.IGD;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
@@ -68,6 +68,13 @@ public class MoeadSpPartition {
 		long startTime = System.currentTimeMillis();
 		List<String> pStr = new ArrayList<String>();
 		List<String> mopList = new ArrayList<String>();
+
+        IGD igdOper = new IGD(1500);
+        String filename = "/home/laboratory/workspace/TestData/PF_Real/DTLZ1(3).dat";
+        try {
+            igdOper.ps = igdOper.loadPfront(filename);
+        } catch (IOException e) {}
+
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
@@ -75,6 +82,16 @@ public class MoeadSpPartition {
 			pStr.clear();
 			mopData.clear();
 			mopData.line2mop(mopStr);
+
+            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size()); 
+            for(int j = 0; j < mop.chromosomes.size(); j ++) {
+               real.add(mop.chromosomes.get(j).objectiveValue);
+            }
+            double[] genDisIGD = new double[2];
+            genDisIGD[0] = i*innerLoop;
+            genDisIGD[1] = igdOper.calcIGD(real);
+            igdOper.igd.add(genDisIGD);
+
 			mopData.mop.initPartition(partitionNum);
 			for(int j = 0; j < partitionNum; j ++) {
 				mopData.mop.setPartitionArr(j);
@@ -287,6 +304,12 @@ public class MoeadSpPartition {
 		System.out.println("cnt = " + cnt);
 	    content = StringJoin.join("\n", col);
     	mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/spark_moead.txt",content);
-	}
 
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/MOEAD_SP_PARTITION_IGD_DTLZ1_3.txt";
+        try {
+            igdOper.saveIGD(filename);
+        } catch (IOException e) {}
+
+
+	}
 }

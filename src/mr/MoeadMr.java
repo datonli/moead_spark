@@ -8,8 +8,8 @@ import java.util.List;
 import moead.MOEAD;
 import mop.AMOP;
 import mop.CMOP;
-import mop.MopData;
 import mop.MopDataPop;
+import mop.IGD;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
@@ -52,10 +52,28 @@ public class MoeadMr {
 		hdfsOper.createFile("moead/moead.txt", mopStr, writeTime);
 		hdfsOper.cp("moead/moead.txt","moead/0/part-00000");
 
+        IGD igdOper = new IGD(1500);
+        String filename = "/home/laboratory/workspace/TestData/PF_Real/DTLZ1(3).dat";
+        try {
+            igdOper.ps = igdOper.loadPfront(filename);
+        } catch (IOException e) {}
+
+
 		long startTime = System.currentTimeMillis();
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
+
+            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size()); 
+            for(int j = 0; j < mop.chromosomes.size(); j ++) {
+               real.add(mop.chromosomes.get(j).objectiveValue);
+            }
+            double[] genDisIGD = new double[2];
+            genDisIGD[0] = i*innerLoop;
+            genDisIGD[1] = igdOper.calcIGD(real);
+            igdOper.igd.add(genDisIGD);   
+
+
 			JobConf jobConf = new JobConf(MoeadMr.class);
 			jobConf.setJobName("moead mapreduce");
 			jobConf.setNumMapTasks(writeTime);
@@ -98,5 +116,11 @@ public class MoeadMr {
 		content = StringJoin.join("\n", col);
 		mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/mr_moead.txt",content);
 		System.out.println("LoopTime is : " + loopTime + "\n");
+
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/MOEAD_MR_IGD_DTLZ1_3.txt";
+        try {
+            igdOper.saveIGD(filename);
+        } catch (IOException e) {}
+
 	}
 }

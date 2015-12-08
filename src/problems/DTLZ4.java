@@ -1,12 +1,12 @@
 package problems;
 
 
-public class DTLZ2 extends AProblem{
+public class DTLZ4 extends AProblem{
 
 	
-	private static DTLZ2 instance;
+	private static DTLZ4 instance;
 	
-	private DTLZ2() {
+	private DTLZ4() {
 		genesDimesion = 10;
 		objectiveDimesion = 3;
 		limit = 2;
@@ -18,6 +18,7 @@ public class DTLZ2 extends AProblem{
 	}
 
 	public void evaluate(double[] genes,double[] objValue) {
+		double alpha = 100.0;
 		int k = genesDimesion - objectiveDimesion +  1;
 		double g = 0;
 		for(int i = genesDimesion - k; i < genesDimesion; i ++){
@@ -26,17 +27,17 @@ public class DTLZ2 extends AProblem{
 		for(int i = 0 ; i  < objectiveDimesion; i ++){
 			objValue[i] = 1.0 + g;
 			for(int j = 0; j < objectiveDimesion - i - 1; j ++){
-				objValue[j] *= Math.cos(0.5 * Math.PI * genes[j]);
+				objValue[j] *= Math.cos(0.5 * Math.PI * Math.pow(genes[j],alpha));
 			}
 			if(i != 0){
-				objValue[i] *= Math.sin(0.5 * Math.PI * genes[objectiveDimesion - i - 1]);
+				objValue[i] *= Math.sin(0.5 * Math.PI * Math.pow(genes[objectiveDimesion - i - 1],alpha));
 			}
 		}
 	}
 
-	public static DTLZ2 getInstance() {
+	public static DTLZ4 getInstance() {
 		if(instance == null)
-			instance = new DTLZ2();
+			instance = new DTLZ4();
 		return instance;
 	}
 
