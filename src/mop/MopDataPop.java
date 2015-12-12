@@ -1,5 +1,6 @@
 package mop;
 
+import java.io.FileWriter;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -141,7 +142,8 @@ public class MopDataPop implements DataOperator {
 				throw new WrongRemindException(
 						"weight length isn't match. Data transfer error!\n"
 								+ "weightStr.length is : " + weightStr.length
-								+ "\nweight.length is :" + weight.length);
+								+ "\nweight.length is :" + weight.length
+								+ "weightStr is " + weightStr);
 			}
 			for (int i = 0; i < weightStr.length; i++) {
 				weight[i] = Double.parseDouble(weightStr[i]);
@@ -200,9 +202,6 @@ public class MopDataPop implements DataOperator {
 			mop.chromosomes.add(mopTmp.chromosomes.get(j));
 			mop.neighbourTable.add(mopTmp.neighbourTable.get(j));
 		}
-		for(int i = 0 ;i < mop.popSize ; i ++) {
-			//System.out.println("original weights 's " + i + " is : " + weightList.get(i) + "\nmop's weights 's " + i + " is : " + StringJoin.join(" ",mop.weights.get(i)));
-		}
 	}
 	
 	public void clear() {
@@ -228,6 +227,12 @@ public class MopDataPop implements DataOperator {
 			dataOutputStream.writeBytes("\n");
 		dataOutputStream.close();
 		return true;
+	}
+
+	public void recordTimeFile(String filename,String str) throws IOException {
+		FileWriter writer = new FileWriter(filename,true);
+		writer.write(str);
+		writer.close();
 	}
 
 }

@@ -23,7 +23,6 @@ import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.mapred.lib.NLineInputFormat;
 
 import problems.AProblem;
-import problems.DTLZ2;
 import problems.DTLZ1;
 import utilities.StringJoin;
 import utilities.WrongRemindException;
@@ -52,9 +51,9 @@ public class MoeadSpPartition {
 
 		int popSize = 105;
 		int neighbourSize = 30;
-		int iterations = 800;
-		int partitionNum = 1;
-		int innerLoop = 40;
+		int iterations = 400;
+		int partitionNum = 2;
+		int innerLoop = 20;
 		int loopTime = iterations / (innerLoop);
 		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
@@ -65,7 +64,6 @@ public class MoeadSpPartition {
 		String mopStr = mopData.mop2Str();
 		SparkConf sparkConf = new SparkConf().setAppName("moead spark");
 		JavaSparkContext cxt = new JavaSparkContext(sparkConf);
-		long startTime = System.currentTimeMillis();
 		List<String> pStr = new ArrayList<String>();
 		List<String> mopList = new ArrayList<String>();
 
@@ -76,13 +74,15 @@ public class MoeadSpPartition {
         } catch (IOException e) {}
 
 		System.out.println("Timer start!!!");
+		long igdTime = 0;
+		long startTime = System.currentTimeMillis();
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
 			//Thread.sleep(2500);
 			pStr.clear();
+			long igdStartTime = System.currentTimeMillis();
 			mopData.clear();
 			mopData.line2mop(mopStr);
-
             List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size()); 
             for(int j = 0; j < mop.chromosomes.size(); j ++) {
                real.add(mop.chromosomes.get(j).objectiveValue);
@@ -91,6 +91,7 @@ public class MoeadSpPartition {
             genDisIGD[0] = i*innerLoop;
             genDisIGD[1] = igdOper.calcIGD(real);
             igdOper.igd.add(genDisIGD);
+			igdTime += System.currentTimeMillis() - igdStartTime ;
 
 			mopData.mop.initPartition(partitionNum);
 			for(int j = 0; j < partitionNum; j ++) {
@@ -98,11 +99,8 @@ public class MoeadSpPartition {
 				mopStr = mopData.mop2Str();
 				pStr.add(mopStr);
 			}
-			System.out.println("pStr.size = " + pStr.size());
 			JavaRDD<String> p = cxt.parallelize(pStr,partitionNum);
-			p.repartition(1);
 			mopData.clear();
-			//System.out.println("mopStr is : \n" + mopStr);
 			JavaPairRDD<String,String> mopPair = p.mapPartitionsToPair(
 													new PairFlatMapFunction<Iterator<String>,String,String>() {
 															public Iterable<Tuple2<String,String>> call(Iterator<String> s) throws WrongRemindException{
@@ -153,8 +151,6 @@ public class MoeadSpPartition {
 																		String[] s1split = s1.split(" ");
 																		String[] s2split = s2.split(" ");
 																		if("111111111".equals(s1split[0])) {
-																			System.out.println("enterrrrrrr 11111111111111");
-																			//System.out.println(s1 + "," + s2);
 																			String[] ss1 = s1split[1].split("#");
 																			String[] ss2 = s2split[1].split("#");
 																			String[] s1_idealPoint = ss1[0].split(",");
@@ -249,34 +245,12 @@ public class MoeadSpPartition {
 
 			System.out.println("after reduceByKey!");
 			List<Tuple2<String, String>> output = mopPop.collect();
-			//output = mopPair.collect();
 			mopList.clear();
 			for(Tuple2<?,?> t : output) {
-				//System.out.println(t._1() + "#############" + t._2());
-				//m2.put(t._1().toString(),t._2().toString());
 				mopList.add(t._2().toString());
 			}
 
-			/*
-			String m1tmp = null;
-			String m2tmp = null;
-			for(String key : m1.keySet()) {
-				if(m2.containsKey(key)) {
-					m2tmp = m2.get(key);
-					m1tmp = m1.get(key);
-					if(!m1tmp.equals(m2tmp)) System.out.println("key = " + key + ",m1 = " + m1tmp + ",m2 = " + m2tmp);
-				}
-			}
-			*/
-
 			mopStr = StringJoin.join("_",mopList);
-			//System.out.println("before resort ,mopStr is :\n" + mopStr);
-			//mopData.line2mop(mopStr);
-			//for(int k = 0; k < mopData.mop.weights.size(); k++) System.out.println(k + "'s weight is : " + StringJoin.join(" ",mopData.mop.weights.get(k)) + " "  + StringJoin.join(" ", mopData.mop.neighbourTable.get(k)));
-			//System.out.println("after mapreduce 's mopStr : \n" + mopStr);
-			//JavaRDD<String> mopValue = mopPop.values();
-			// Nov. 3  need to add a function let all recoreds merge to one population.
-			// and make it cycle
 
 			System.out.println("After map");
 			if(i == loopTime -1){
@@ -287,25 +261,28 @@ public class MoeadSpPartition {
 
 		System.out.println("Out of loop");
 		cxt.stop();
-		System.out.println("Running time is : " + (System.currentTimeMillis() - startTime));
-    	BufferedReader br = new BufferedReader(hdfsOper.open("spark/spark_moead.txt"));
-	    String line = null;
-    	String content = null;
-	    List<String> col = new ArrayList<String>();
-		int cnt = 0;
-    	while ((line = br.readLine()) != null  ) {
-			if(line.split(" ").length > 2) {
-				cnt ++;
-	       		col.add(StringJoin.join(" ",mopData.line2ObjValue(line)));          
-			} else {
-				//System.out.println(line);
-			}
-    	}
-		System.out.println("cnt = " + cnt);
-	    content = StringJoin.join("\n", col);
-    	mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/spark_moead.txt",content);
+        long recordTime = System.currentTimeMillis()-startTime - igdTime;
+		System.out.println("Running time is : " + recordTime);
+		mopData.recordTimeFile("/home/laboratory/workspace/moead_parallel/experiments/recordTime.txt","\nDTLZ1,MoeadSpParition ,partitionNum_2,recordTime is " + recordTime);
 
-        filename = "/home/laboratory/workspace/moead_parallel/experiments/MOEAD_SP_PARTITION_IGD_DTLZ1_3.txt";
+
+        mopData.clear();
+        mopData.line2mop(mopStr);
+
+
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/partitionNum_2_spark_moead_partition.txt";
+        mopData.mop.write2File(filename);                                                                                                                                                                          
+
+        String content = null;
+        List<String> col = new ArrayList<String>();
+        for(int j = 0 ; j < mopData.mop.chromosomes.size(); j ++) {
+            col.add(StringJoin.join(" ",mopData.mop.chromosomes.get(j).objectiveValue));
+        }
+        content = StringJoin.join("\n", col);
+        mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/partitionNum_2_spark_moead_all_partition.txt",content);
+
+
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/partitionNum_2_MOEAD_SP_PARTITION_IGD_DTLZ1_3.txt";
         try {
             igdOper.saveIGD(filename);
         } catch (IOException e) {}

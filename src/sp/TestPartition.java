@@ -51,9 +51,10 @@ public class TestPartition {
 		JavaSparkContext cxt = new JavaSparkContext(sparkConf);
 		List<String> pStr = new ArrayList<String>(2);
 		int loopTime = 1;
-		int partitionNum = 1;
+		int partitionNum = 2;
 		//String mopStr = "0.11428571428571428,0.8857142857142857##############0.11428571428571428,0.8857142857142857 0.887231062637861,0.39981830854994366,0.5000410892620885,0.49991391990917067,0.5000191741683344,0.4991579585874673,0.5996237679399219,0.3999667348118806,0.5997632840511493,0.5003875546804097 2.31093750947948,0.29372502635277803 12,13,11,14,10,9,15,16,8,17,7,18,6,5,19,20,4,21,3,2,22,23,1,24,0,25,26,27,28,29 0.2640571000498967!0.18095238095238095,0.819047619047619##############0.18095238095238095,0.819047619047619 0.8188578949309404,0.3998182626107639,0.49936337758784893,0.49991156961140304,0.4999384742262174,0.5000573483488967,0.5996403565892136,0.39996569300690343,0.49924859498100405,0.5003404924509494 1.7387542848788986,0.38463525028036005 19,20,18,21,17,16,22,15,23,24,14,13,25,12,26,27,11,10,28,9,29,30,8,31,7,6,32,5,33,34 0.3147551317333349";
 		String mopStr = "111 3.2324#222 4.2214";
+		int cnt = 0;
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
 			for(int j = 0; j < partitionNum; j ++) {
@@ -65,7 +66,8 @@ public class TestPartition {
 			JavaPairRDD<String,String> mopPair = p.mapPartitionsToPair(
 													new PairFlatMapFunction<Iterator<String>,String,String>() {
 															public Iterable<Tuple2<String,String>> call(Iterator<String> s) throws WrongRemindException{
-																System.out.println("enter map part ");
+																//cnt ++;
+																System.out.println("enter map part and cnt = " + cnt);
 																String[] ss = s.next().toString().split("#");
 																List<Tuple2<String,String>> lt = new ArrayList<Tuple2<String,String>>();
 																String[] s1 = ss[0].split(" ");
@@ -95,7 +97,7 @@ public class TestPartition {
 														}
 											);
 			System.out.println("after reduceByKey!");
-			//output = mopPop.collect();
+			List<Tuple2<String, String>> output = mopPop.collect();
 			/*
 			List<Tuple2<String, String>> output = mopPair.collect();
 			for(Tuple2<?,?> t : output) {

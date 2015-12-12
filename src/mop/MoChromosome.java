@@ -51,4 +51,6 @@ public abstract class MoChromosome {
 	public abstract String vectorString();
 	
 	public abstract String getParameterString();
+
+	public abstract int compareInd(MoChromosome ind2);
 }

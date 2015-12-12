@@ -47,6 +47,7 @@ public abstract class AMOP{
 	public void setProblem(AProblem problem){
 		this.problem = problem;
 	}
+	public abstract void writeAll2File(String fileName) throws IOException ;
 	public abstract void write2File(String fileName) throws IOException ;
 
 	public static int getPopSize() {

@@ -27,7 +27,7 @@ public class DTLZ4 extends AProblem{
 		for(int i = 0 ; i  < objectiveDimesion; i ++){
 			objValue[i] = 1.0 + g;
 			for(int j = 0; j < objectiveDimesion - i - 1; j ++){
-				objValue[j] *= Math.cos(0.5 * Math.PI * Math.pow(genes[j],alpha));
+				objValue[i] *= Math.cos(0.5 * Math.PI * Math.pow(genes[j],alpha));
 			}
 			if(i != 0){
 				objValue[i] *= Math.sin(0.5 * Math.PI * Math.pow(genes[objectiveDimesion - i - 1],alpha));

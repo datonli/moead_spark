@@ -192,4 +192,30 @@ public class CMoChromosome extends MoChromosome {
 		
 	}
 
+
+    // equal : 0
+    // dominating : 1
+    // dominated : 2
+    // non-dominated : 3
+    public int compareInd(MoChromosome ind2) {
+        boolean bBetter = false;
+        boolean bWorst = false;
+        int i = 0;
+        do {
+            if(objectiveValue[i] < ind2.objectiveValue[i]) 
+                bBetter = true;                                                                                                                                                                                    
+            if(objectiveValue[i] > ind2.objectiveValue[i])
+                bWorst = true;
+            i++;
+        } while (!(bWorst && bBetter) && i < objectiveDimesion);
+
+        if(bWorst) {
+            if(bBetter) return 3; 
+            else return 2;
+        } else {
+            if(bBetter) return 1;
+            else return 0; 
+        }
+    }
+
 }

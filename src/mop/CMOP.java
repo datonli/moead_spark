@@ -320,6 +320,7 @@ public class CMOP extends AMOP {
 			if(offSpring.objectiveValue[j] < idealPoint[j]){
 				idealPoint[j] = offSpring.objectiveValue[j];
 			}
+			offSpring.idealPoint[j] = idealPoint[j];
 		}
 	}
 	
@@ -361,8 +362,24 @@ public class CMOP extends AMOP {
 //		do nothing
 	}
 	
+    public List<double[]> population2front(List<MoChromosome> popList) { 
+        List<double[]> popFront = new ArrayList<double[]>(popList.size());
+        int[] nDominated = new int[popList.size()];
+        for(int k = 0; k < popList.size(); k ++) {
+            for(int j = k + 1; j < popList.size(); j ++) {
+                int result = popList.get(k).compareInd(popList.get(j));
+                if(2 == result) nDominated[k] ++;
+                else if(1 == result) nDominated[j] ++;
+            }   
+        }   
+        for(int n = 0 ; n < popList.size(); n ++) {            
+            if(0 == nDominated[n]) popFront.add(popList.get(n).objectiveValue);
+        }   
+        return popFront;                                          
+    }
+
 	
-	public void write2File(String fileName) throws IOException{
+	public void writeAll2File(String fileName) throws IOException{
 		File file = new File(fileName);
 		if(!file.exists()){
 			file.createNewFile();
@@ -383,5 +400,21 @@ public class CMOP extends AMOP {
 		bw.close();
 		fw.close();
 	}
+
+    public void write2File(String fileName) throws IOException{
+        File file = new File(fileName);
+        if(!file.exists()){
+            file.createNewFile();
+        }
+        FileWriter fw = new FileWriter(file.getAbsoluteFile());
+        BufferedWriter bw = new BufferedWriter(fw);
+        List<double[]> popFront = population2front(chromosomes);
+        for(int n = 0 ; n < popFront.size(); n ++){
+            bw.write(StringJoin.join(" ",popFront.get(n)));
+            if(n < popSize - 1) bw.write("\n");
+        }
+        bw.close();
+        fw.close();
+    }
 
 }

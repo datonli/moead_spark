@@ -32,9 +32,9 @@ public class MapClass extends MapReduceBase implements Mapper<Object, Text, Text
 	public void map(Object key, Text value, OutputCollector<Text, Text> output, Reporter reporter) 
 			throws IOException{
 		String paragraph = value.toString();
-		System.out.println("paragraph is \n" + paragraph);
+		//System.out.println("paragraph is \n" + paragraph);
 		int popSize = 105;
-		int neighbourSize = 30;
+		int neighbourSize = 20;
 		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
 		MopDataPop mopData = new MopDataPop(mop);
@@ -43,12 +43,12 @@ public class MapClass extends MapReduceBase implements Mapper<Object, Text, Text
 		try {
 			mopData.line2mop(paragraph);
 			MOEAD.moead(mopData.mop,innerLoop);
-			
 			weightVector.set("111111111");
 			indivInfo.set(mopData.idealPoint2Line() + "#" +  StringJoin.join(",",mopData.mop.partitionArr));
 			output.collect(weightVector, indivInfo);
 			System.out.println("output collect ~!~");
 			for (int i = 0; i < mopData.mop.chromosomes.size(); i++) {
+				for(int j = 0; j < mopData.mop.idealPoint.length; j ++) mopData.mop.chromosomes.get(i).idealPoint[j] = mopData.mop.idealPoint[j];
 				weightVector.set(mopData.weight2Line(i));
 				indivInfo.set(mopData.mop2Line(i));
 				output.collect(weightVector, indivInfo);
@@ -58,5 +58,4 @@ public class MapClass extends MapReduceBase implements Mapper<Object, Text, Text
 		}
 
 	}
-
 }

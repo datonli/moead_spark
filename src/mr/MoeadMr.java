@@ -17,7 +17,7 @@ import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.mapred.lib.NLineInputFormat;
 
 import problems.AProblem;
-import problems.DTLZ2;
+import problems.DTLZ1;
 import problems.DTLZ1;
 import utilities.StringJoin;
 import utilities.WrongRemindException;
@@ -33,10 +33,10 @@ public class MoeadMr {
 	public static void main(String[] args) throws IOException,
 			ClassNotFoundException, InterruptedException, WrongRemindException {
 		int popSize = 105;
-		int neighbourSize = 30;
+		int neighbourSize = 20;
 		int iterations = 400;
-		int writeTime = 1;
-		int innerLoop = 400;
+		int writeTime = 2;
+		int innerLoop = 50;
 		int loopTime = iterations / (writeTime * innerLoop);
 		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
@@ -60,19 +60,25 @@ public class MoeadMr {
 
 
 		long startTime = System.currentTimeMillis();
+		long igdTime = 0;
 		System.out.println("Timer start!!!");
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
 
-            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size()); 
-            for(int j = 0; j < mop.chromosomes.size(); j ++) {
-               real.add(mop.chromosomes.get(j).objectiveValue);
+			//Thread.sleep(2500);
+			
+            long igdStartTime = System.currentTimeMillis();
+			mopData.clear();
+			mopData.line2mop(mopStr);
+            List<double[]> real = new ArrayList<double[]>(mopData.mop.chromosomes.size()); 
+            for(int j = 0; j < mopData.mop.chromosomes.size(); j ++) {
+               real.add(mopData.mop.chromosomes.get(j).objectiveValue);
             }
             double[] genDisIGD = new double[2];
             genDisIGD[0] = i*innerLoop;
             genDisIGD[1] = igdOper.calcIGD(real);
             igdOper.igd.add(genDisIGD);   
-
+            igdTime += System.currentTimeMillis() - igdStartTime ;
 
 			JobConf jobConf = new JobConf(MoeadMr.class);
 			jobConf.setJobName("moead mapreduce");
@@ -101,11 +107,19 @@ public class MoeadMr {
 			mopData.clear();
 			mopData.setDelimiter("\n");
 			mopData.line2mop(hdfsOper.readWholeFile("moead/"+(i+1)+"/part-00000"));		
+			mopData.mop.initPartition(1);
+			System.out.println("idealPoint is :  " + StringJoin.join(" ",mopData.mop.idealPoint));
+			mopData.setDelimiter("_");
 			mopStr = mopData.mop2Str();
 			hdfsOper.rm("moead/moead.txt");
 			hdfsOper.createFile("moead/moead.txt", mopStr, writeTime);
 		}
-		System.out.println("Running time is : " + (System.currentTimeMillis() - startTime));
+        long recordTime = System.currentTimeMillis()-startTime - igdTime;
+        System.out.println("Running time is : " + recordTime);
+        mopData.recordTimeFile("/home/laboratory/workspace/moead_parallel/experiments/recordTime.txt","\nDTLZ1/MoeadMr ,writeTime_2,recordTime is " + recordTime);
+
+		mopData.mop.write2File("/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/writeTime_2_mr_moead.txt");
+
 		BufferedReader br = new BufferedReader(hdfsOper.open("moead/"+(loopTime-1)+"/part-00000"));
 		String line = null;
 		String content = null;
@@ -114,10 +128,10 @@ public class MoeadMr {
 			col.add(StringJoin.join(" ",mopData.line2ObjValue(line)));
 		}
 		content = StringJoin.join("\n", col);
-		mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/parallel/mr_moead.txt",content);
+		mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/writeTime_2_mr_moead_all.txt",content);
 		System.out.println("LoopTime is : " + loopTime + "\n");
 
-        filename = "/home/laboratory/workspace/moead_parallel/experiments/MOEAD_MR_IGD_DTLZ1_3.txt";
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/writeTime_2_MOEAD_MR_IGD_DTLZ1_3.txt";
         try {
             igdOper.saveIGD(filename);
         } catch (IOException e) {}
