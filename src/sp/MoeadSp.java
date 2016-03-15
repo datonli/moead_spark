@@ -47,11 +47,11 @@ public class MoeadSp {
 	public static void main(String[] args) throws IOException,
 			ClassNotFoundException, InterruptedException, WrongRemindException {
 
-		int popSize = 105;
-		int neighbourSize = 20;
-		int iterations = 400;
+		int popSize = 406;
+		int neighbourSize = 30;
+		int iterations = 800;
 		int writeTime = 2;
-		int innerLoop = 20;
+		int innerLoop = 1;
 		int loopTime = iterations / (writeTime * innerLoop);
 		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
@@ -87,7 +87,7 @@ public class MoeadSp {
 		long igdTime = 0;
 		for (int i = 0; i < loopTime; i++) {
 			System.out.println("The " + i + "th time!");
-			Thread.sleep(2500);
+			Thread.sleep(3000);
 			pStr.clear();
             long igdStartTime = System.currentTimeMillis();
 			mopData.clear();
@@ -95,12 +95,10 @@ public class MoeadSp {
 			mopData.line2mop(mopStr);
 			mopData.mop.initPartition(1);
 			mopStr = mopData.mop2Str();
-            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size()); 
-           	for(int j = 0; j < mop.chromosomes.size(); j ++) {
-               real.add(mop.chromosomes.get(j).objectiveValue);
-            }
+                          
+            List<double[]> real  = mopData.mop.population2front(mopData.mop.chromosomes);
             double[] genDisIGD = new double[2];
-            genDisIGD[0] = i*innerLoop;
+            genDisIGD[0] = i*innerLoop*writeTime/2;
             genDisIGD[1] = igdOper.calcIGD(real);
             igdOper.igd.add(genDisIGD);
 			igdTime += System.currentTimeMillis() - igdStartTime ;
@@ -112,8 +110,8 @@ public class MoeadSp {
 			JavaPairRDD<String,String> mopPair = p.mapPartitionsToPair(
 													new PairFlatMapFunction<Iterator<String>,String,String>() {
 															public Iterable<Tuple2<String,String>> call(Iterator<String> s) throws WrongRemindException{
-																int popSize = 105;
-																int neighbourSize = 20;
+																int popSize = 406;
+																int neighbourSize = 30;
 																AProblem aProblem = DTLZ1.getInstance();
 																AMOP aMop = CMOP.getInstance(popSize, neighbourSize, aProblem);
 																MopDataPop mmop = new MopDataPop(aMop);
@@ -293,12 +291,22 @@ public class MoeadSp {
     	content = StringJoin.join("\n", col);
 	    mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/writeTime_2_spark_moead_all_sp.txt",content);
 
-        filename = "/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/writeTime_2_MOEAD_SP_IGD_DTLZ2_3.txt";
+		/*
+            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size());                                                                                       
+            for(int j = 0; j < mop.chromosomes.size(); j ++) {
+               real.add(mop.chromosomes.get(j).objectiveValue);
+            }
+		*/
+			List<double[]> real  = mopData.mop.population2front(mopData.mop.chromosomes);
+            double[] genDisIGD = new double[2];
+            genDisIGD[0] = iterations/2;
+            genDisIGD[1] = igdOper.calcIGD(real);
+            igdOper.igd.add(genDisIGD);
+
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/writeTime_2_MOEAD_SP_IGD_3.txt";
         try {
             igdOper.saveIGD(filename);
         } catch (IOException e) {}
-
-
 	}
 
     

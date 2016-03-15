@@ -103,10 +103,4 @@ public class ReduceClass extends MapReduceBase implements Reducer<Text, Text, Nu
             return max_fun;                                                                                                
    } 
 
-
-	public double line2FitnessValue(String line) {
-		String[] lineSplit = line.split(" ");
-		String fitnessValueStr = lineSplit[4];
-		return Double.parseDouble(fitnessValueStr);
-	}
 }

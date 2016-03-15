@@ -32,30 +32,26 @@ public class MapClass extends MapReduceBase implements Mapper<Object, Text, Text
 	public void map(Object key, Text value, OutputCollector<Text, Text> output, Reporter reporter) 
 			throws IOException{
 		String paragraph = value.toString();
-		//System.out.println("paragraph is \n" + paragraph);
-		int popSize = 105;
-		int neighbourSize = 20;
+		int popSize = 406;
+		int neighbourSize = 30;
 		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
 		MopDataPop mopData = new MopDataPop(mop);
-		System.out.println("map begin ... ");
-		mopData.clear();
 		try {
 			mopData.line2mop(paragraph);
 			MOEAD.moead(mopData.mop,innerLoop);
 			weightVector.set("111111111");
 			indivInfo.set(mopData.idealPoint2Line() + "#" +  StringJoin.join(",",mopData.mop.partitionArr));
 			output.collect(weightVector, indivInfo);
-			System.out.println("output collect ~!~");
 			for (int i = 0; i < mopData.mop.chromosomes.size(); i++) {
-				for(int j = 0; j < mopData.mop.idealPoint.length; j ++) mopData.mop.chromosomes.get(i).idealPoint[j] = mopData.mop.idealPoint[j];
+				//for(int j = 0; j < mopData.mop.idealPoint.length; j ++) mopData.mop.chromosomes.get(i).idealPoint[j] = mopData.mop.idealPoint[j];
 				weightVector.set(mopData.weight2Line(i));
 				indivInfo.set(mopData.mop2Line(i));
 				output.collect(weightVector, indivInfo);
 			}
+			mopData.clear();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 }

@@ -49,11 +49,11 @@ public class MoeadSpPartition {
 	public static void main(String[] args) throws IOException,
 			ClassNotFoundException, InterruptedException, WrongRemindException {
 
-		int popSize = 105;
+		int popSize = 406;
 		int neighbourSize = 30;
-		int iterations = 400;
+		int iterations = 1600;
 		int partitionNum = 2;
-		int innerLoop = 20;
+		int innerLoop = 40;
 		int loopTime = iterations / (innerLoop);
 		AProblem problem = DTLZ1.getInstance();
 		AMOP mop = CMOP.getInstance(popSize, neighbourSize, problem);
@@ -83,12 +83,15 @@ public class MoeadSpPartition {
 			long igdStartTime = System.currentTimeMillis();
 			mopData.clear();
 			mopData.line2mop(mopStr);
-            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size()); 
-            for(int j = 0; j < mop.chromosomes.size(); j ++) {
+            /*      
+            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size());                                                                                       
+            for(int j = 0; j < mop.chromosomes.size(); j ++) { 
                real.add(mop.chromosomes.get(j).objectiveValue);
-            }
+            }                                                                                                                                                                                                      
+            */                                     
+            List<double[]> real  = mopData.mop.population2front(mopData.mop.chromosomes);
             double[] genDisIGD = new double[2];
-            genDisIGD[0] = i*innerLoop;
+            genDisIGD[0] = i*innerLoop/2;
             genDisIGD[1] = igdOper.calcIGD(real);
             igdOper.igd.add(genDisIGD);
 			igdTime += System.currentTimeMillis() - igdStartTime ;
@@ -105,7 +108,7 @@ public class MoeadSpPartition {
 													new PairFlatMapFunction<Iterator<String>,String,String>() {
 															public Iterable<Tuple2<String,String>> call(Iterator<String> s) throws WrongRemindException{
 																//System.out.println("enter map part ");
-																int popSize = 105;
+																int popSize = 406;
 																int neighbourSize = 30;
 																AProblem aProblem = DTLZ1.getInstance();
 																AMOP aMop = CMOP.getInstance(popSize, neighbourSize, aProblem);
@@ -280,9 +283,19 @@ public class MoeadSpPartition {
         }
         content = StringJoin.join("\n", col);
         mopData.write2File("/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/partitionNum_2_spark_moead_all_partition.txt",content);
+            /*      
+            List<double[]> real = new ArrayList<double[]>(mop.chromosomes.size());                                                                                       
+            for(int j = 0; j < mop.chromosomes.size(); j ++) { 
+               real.add(mop.chromosomes.get(j).objectiveValue);
+            }                                                                                                                                                                                                      
+            */                                     
+            List<double[]> real  = mopData.mop.population2front(mopData.mop.chromosomes);
+            double[] genDisIGD = new double[2];
+            genDisIGD[0] = iterations/2;
+            genDisIGD[1] = igdOper.calcIGD(real);
+            igdOper.igd.add(genDisIGD);
 
-
-        filename = "/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/partitionNum_2_MOEAD_SP_PARTITION_IGD_DTLZ1_3.txt";
+        filename = "/home/laboratory/workspace/moead_parallel/experiments/DTLZ1/partitionNum_2_MOEAD_SP_PARTITION_IGD_3.txt";
         try {
             igdOper.saveIGD(filename);
         } catch (IOException e) {}
